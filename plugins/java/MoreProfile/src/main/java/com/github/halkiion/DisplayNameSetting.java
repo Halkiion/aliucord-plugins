@@ -48,8 +48,7 @@ public class DisplayNameSetting {
         if (usernameRowRef == null)
             return;
 
-        String headerText = context.getString(R.h.form_label_account_information);
-        int insertIndex = findInsertIndex(mainColumn, headerText);
+        int insertIndex = 2;
 
         LinearLayout settingRow = (mainColumn != null) ? (LinearLayout) mainColumn.findViewWithTag(SETTING_TAG) : null;
 
@@ -68,8 +67,6 @@ public class DisplayNameSetting {
         if (displayName == null)
             displayName = "";
         lastDisplayName = displayName;
-
-        addDisplayNameHeader(mainColumn, headerText);
 
         if (settingRow == null) {
             mainColumn.setLayoutTransition(null);
@@ -139,18 +136,6 @@ public class DisplayNameSetting {
         return rowClone;
     }
 
-    private static int findInsertIndex(LinearLayout mainColumn, String headerText) {
-        for (int i = 0; i < mainColumn.getChildCount(); i++) {
-            View child = mainColumn.getChildAt(i);
-            if (child instanceof TextView) {
-                CharSequence text = ((TextView) child).getText();
-                if (text != null && text.toString().equals(headerText))
-                    return i + 1;
-            }
-        }
-        return 1;
-    }
-
     private static void clearTextWatchers(EditText editText) {
         try {
             Field f = TextView.class.getDeclaredField("mListeners");
@@ -169,7 +154,7 @@ public class DisplayNameSetting {
         if (usernameWrap == null)
             return;
 
-        usernameWrap.setHint("Display Name");
+        usernameWrap.setHint(Strings.getString("display_name"));
         EditText usernameEdit = usernameWrap.getEditText();
         if (usernameEdit == null)
             return;
@@ -262,24 +247,5 @@ public class DisplayNameSetting {
                 source.getPaddingRight(),
                 source.getPaddingBottom());
         target.setBackground(source.getBackground());
-    }
-
-    private static void addDisplayNameHeader(LinearLayout mainColumn, String headerText) {
-        boolean headerExists = false;
-        for (int i = 0; i < mainColumn.getChildCount(); i++) {
-            View child = mainColumn.getChildAt(i);
-            if (child instanceof TextView) {
-                CharSequence text = ((TextView) child).getText();
-                if (text != null && text.toString().equals(headerText)) {
-                    headerExists = true;
-                    break;
-                }
-            }
-        }
-        if (!headerExists) {
-            TextView header = new TextView(mainColumn.getContext(), null, 0, R.i.UiKit_Settings_Item_Header);
-            header.setText(headerText);
-            mainColumn.addView(header, 0);
-        }
     }
 }

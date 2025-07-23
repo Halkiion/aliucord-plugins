@@ -2,7 +2,9 @@ package com.github.halkiion.plugins;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Base64;
 import android.widget.Toast;
+import android.os.Build;
 
 import com.aliucord.Http;
 import com.aliucord.Utils;
@@ -10,32 +12,64 @@ import com.discord.utilities.rest.RestAPI;
 
 import java.util.function.Consumer;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
+import java.util.UUID;
 
 import org.json.JSONObject;
 
 
 public class APIRequest {
-
     private static final String AUTH_TOKEN = RestAPI.AppHeadersProvider.INSTANCE.getAuthToken();
-    private static final String SUPERPROPS = "eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiRGlzY29yZCBDbGllbnQiLCJyZWxlYXNlX2NoYW5uZWwiOiJzdGFibGUiLCJjbGllbnRfdmVyc2lvbiI6IjEuMC45MTk5Iiwib3NfdmVyc2lvbiI6IjEwLjAuMjI2MzEiLCJvc19hcmNoIjoieDY0IiwiYXBwX2FyY2giOiJ4NjQiLCJzeXN0ZW1fbG9jYWxlIjoiZW4tR0IiLCJoYXNfY2xpZW50X21vZHMiOmZhbHNlLCJjbGllbnRfbGF1bmNoX2lkIjoiOWU2NjliYjYtZDY0MC00MDIwLThiNjktZGIxNTc4NDNjMGUzIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgZGlzY29yZC8xLjAuOTE5OSBDaHJvbWUvMTM0LjAuNjk5OC4yMDUgRWxlY3Ryb24vMzUuMy4wIFNhZmFyaS81MzcuMzYiLCJicm93c2VyX3ZlcnNpb24iOiIzNS4zLjAiLCJvc19zZGtfdmVyc2lvbiI6IjIyNjMxIiwiY2xpZW50X2J1aWxkX251bWJlciI6NDE3MjY2LCJuYXRpdmVfYnVpbGRfbnVtYmVyIjo2NTk0MSwiY2xpZW50X2V2ZW50X3NvdXJjZSI6bnVsbCwiY2xpZW50X2hlYXJ0YmVhdF9zZXNzaW9uX2lkIjoiYzU0MDIwZDktYzdjYi00MGU4LWJjZTItZmZiNzQ4NDAwOGEwIiwiY2xpZW50X2FwcF9zdGF0ZSI6ImZvY3VzZWQifQ==";
+    private static final String OS_VERSION = Build.VERSION.RELEASE;
+    private static final String MOBILE_UA = 
+        "Mozilla/5.0 (Android " + OS_VERSION + "; Mobile; rv:140.0) Gecko/140.0 Firefox/140.0";
+    private static final int CLIENT_BUILD_NUMBER = 422112;
+    private static final String DEVICE_LOCALE = Locale.getDefault().toString().replace("_", "-");
+
+    public static String getSuperProps() {
+        try {
+            JSONObject props = new JSONObject();
+            props.put("os", "Android");
+            props.put("browser", "Android Mobile");
+            props.put("device", "Android");
+            props.put("system_locale", DEVICE_LOCALE);
+            props.put("has_client_mods", false);
+            props.put("browser_user_agent", MOBILE_UA);
+            props.put("browser_version", "140.0");
+            props.put("os_version", OS_VERSION);
+            props.put("referrer", "https://top.gg/");
+            props.put("referring_domain", "top.gg");
+            props.put("referrer_current", "");
+            props.put("referring_domain_current", "");
+            props.put("release_channel", "stable");
+            props.put("client_build_number", 422112);
+            props.put("client_event_source", JSONObject.NULL);
+            props.put("client_launch_id", UUID.randomUUID().toString());
+            props.put("launch_signature", UUID.randomUUID().toString());
+            props.put("client_heartbeat_session_id", UUID.randomUUID().toString());
+            props.put("client_app_state", "focused");
+            return Base64.encodeToString(props.toString().getBytes(), Base64.NO_WRAP);
+        } catch (Exception e) {
+            return "";
+        }
+    }
 
     public static Map<String, String> buildDefaultHeaders() {
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("accept", "*/*");
+        headers.put("accept-language", Locale.getDefault().toLanguageTag() + ",en-US;q=0.9,zh-Hans-CN;q=0.8");
         headers.put("authorization", AUTH_TOKEN);
         headers.put("content-type", "application/json");
         headers.put("origin", "https://discord.com");
         headers.put("priority", "u=1, i");
-        headers.put("sec-ch-ua", "\"Not:A-Brand\";v=\"24\", \"Chromium\";v=\"134\"");
-        headers.put("sec-ch-ua-mobile", "?0");
-        headers.put("sec-ch-ua-platform", "\"Windows\"");
-        headers.put("sec-fetch-dest", "empty");
-        headers.put("sec-fetch-mode", "cors");
-        headers.put("sec-fetch-site", "same-origin");
-        headers.put("user-agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9199 Chrome/134.0.6998.205 Electron/35.3.0 Safari/537.36");
-        headers.put("x-super-properties", SUPERPROPS);
+        headers.put("referer", "https://discord.com/channels/@me");
+        headers.put("user-agent", MOBILE_UA);
+        headers.put("x-debug-options", "bugReporterEnabled");
+        headers.put("x-discord-locale", DEVICE_LOCALE);
+        headers.put("x-discord-timezone", TimeZone.getDefault().getID());
+        headers.put("x-super-properties", getSuperProps());
         return headers;
     }
 
@@ -106,7 +140,7 @@ public class APIRequest {
                 });
             });
         } else {
-            Utility.showToast("No valid Activity to show captcha dialog.", Toast.LENGTH_LONG);
+            Utility.showToast(Strings.getString("no_valid_activity"), Toast.LENGTH_LONG);
         }
     }
 
@@ -163,12 +197,13 @@ public class APIRequest {
                 payload,
                 context,
                 resp -> {
-                    Utility.showToast("Display Name saved.", Toast.LENGTH_LONG);
+                    Utils.setClipboard("Message", getSuperProps());
+                    Utility.showToast(Strings.getString("display_name_saved"), Toast.LENGTH_LONG);
                     if (callback != null)
                         callback.accept(true);
                 },
                 e -> {
-                    Utility.showToast(parseError(e, "Failed to save Display Name", field), Toast.LENGTH_LONG);
+                    Utility.showToast(parseError(e, Strings.getString("display_name_save_failed"), field), Toast.LENGTH_LONG);
                     if (callback != null)
                         callback.accept(false);
                 },
@@ -187,7 +222,7 @@ public class APIRequest {
                 context,
                 resp -> {
                 },
-                e -> Utility.showToast(parseError(e, "Failed to save Pronouns", field), Toast.LENGTH_LONG),
+                e -> Utility.showToast(parseError(e, Strings.getString("pronouns_save_failed"), field), Toast.LENGTH_LONG),
                 null);
     }
 
