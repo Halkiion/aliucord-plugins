@@ -1,4 +1,4 @@
-version = "1.0.1"
+version = "1.0.2"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {

@@ -197,7 +197,6 @@ public class APIRequest {
                 payload,
                 context,
                 resp -> {
-                    Utils.setClipboard("Message", getSuperProps());
                     Utility.showToast(Strings.getString("display_name_saved"), Toast.LENGTH_LONG);
                     if (callback != null)
                         callback.accept(true);
