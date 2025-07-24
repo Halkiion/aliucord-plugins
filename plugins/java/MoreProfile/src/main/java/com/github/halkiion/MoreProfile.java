@@ -23,6 +23,8 @@ import java.lang.reflect.Method;
 public class MoreProfile extends Plugin {
     @Override
     public void start(Context context) {
+        APIRequest.versionFetcher.initialise();
+
         patcher.patch(
                 WidgetSettingsAccount.class,
                 "configureUI",

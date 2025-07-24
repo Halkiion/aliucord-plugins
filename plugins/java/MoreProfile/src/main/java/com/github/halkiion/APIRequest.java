@@ -16,6 +16,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.util.ArrayList;
 
 import org.json.JSONObject;
 
@@ -23,10 +26,18 @@ import org.json.JSONObject;
 public class APIRequest {
     private static final String AUTH_TOKEN = RestAPI.AppHeadersProvider.INSTANCE.getAuthToken();
     private static final String OS_VERSION = Build.VERSION.RELEASE;
-    private static final String MOBILE_UA = 
-        "Mozilla/5.0 (Android " + OS_VERSION + "; Mobile; rv:140.0) Gecko/140.0 Firefox/140.0";
-    private static final int CLIENT_BUILD_NUMBER = 422112;
-    private static final String DEVICE_LOCALE = Locale.getDefault().toString().replace("_", "-");
+
+    private static String FIREFOX_NIGHTLY_VERSION = "143.0";
+    private static int CLIENT_BUILD_NUMBER = 422112;
+
+    private static String CLIENT_BUILD_NUMBER_STRING = String.valueOf(CLIENT_BUILD_NUMBER);
+    private static String DEVICE_LOCALE = Locale.getDefault().toString().replace("_", "-");
+
+    private static String getMobileUA() {
+        return "Mozilla/5.0 (Android " + OS_VERSION
+                + "; Mobile; rv:" + FIREFOX_NIGHTLY_VERSION + ") Gecko/" + FIREFOX_NIGHTLY_VERSION + " Firefox/"
+                + FIREFOX_NIGHTLY_VERSION;
+    }
 
     public static String getSuperProps() {
         try {
@@ -36,15 +47,15 @@ public class APIRequest {
             props.put("device", "Android");
             props.put("system_locale", DEVICE_LOCALE);
             props.put("has_client_mods", false);
-            props.put("browser_user_agent", MOBILE_UA);
-            props.put("browser_version", "140.0");
+            props.put("browser_user_agent", getMobileUA());
+            props.put("browser_version", FIREFOX_NIGHTLY_VERSION);
             props.put("os_version", OS_VERSION);
             props.put("referrer", "https://top.gg/");
             props.put("referring_domain", "top.gg");
             props.put("referrer_current", "");
             props.put("referring_domain_current", "");
             props.put("release_channel", "stable");
-            props.put("client_build_number", 422112);
+            props.put("client_build_number", CLIENT_BUILD_NUMBER);
             props.put("client_event_source", JSONObject.NULL);
             props.put("client_launch_id", UUID.randomUUID().toString());
             props.put("launch_signature", UUID.randomUUID().toString());
@@ -65,7 +76,7 @@ public class APIRequest {
         headers.put("origin", "https://discord.com");
         headers.put("priority", "u=1, i");
         headers.put("referer", "https://discord.com/channels/@me");
-        headers.put("user-agent", MOBILE_UA);
+        headers.put("user-agent", getMobileUA());
         headers.put("x-debug-options", "bugReporterEnabled");
         headers.put("x-discord-locale", DEVICE_LOCALE);
         headers.put("x-discord-timezone", TimeZone.getDefault().getID());
@@ -202,7 +213,8 @@ public class APIRequest {
                         callback.accept(true);
                 },
                 e -> {
-                    Utility.showToast(parseError(e, Strings.getString("display_name_save_failed"), field), Toast.LENGTH_LONG);
+                    Utility.showToast(parseError(e, Strings.getString("display_name_save_failed"), field),
+                            Toast.LENGTH_LONG);
                     if (callback != null)
                         callback.accept(false);
                 },
@@ -221,7 +233,8 @@ public class APIRequest {
                 context,
                 resp -> {
                 },
-                e -> Utility.showToast(parseError(e, Strings.getString("pronouns_save_failed"), field), Toast.LENGTH_LONG),
+                e -> Utility.showToast(parseError(e, Strings.getString("pronouns_save_failed"), field),
+                        Toast.LENGTH_LONG),
                 null);
     }
 
@@ -256,5 +269,62 @@ public class APIRequest {
         } catch (Exception ignored) {
         }
         return fallback;
+    }
+
+    /*
+     * Fetch latest Firefox Nightly version and Discord web client build number
+     */
+    public static class versionFetcher {
+        private static final Pattern SCRIPT_SRC_PATTERN = Pattern.compile(
+                "<script[^>]*src=[\"']([^\"']+\\.js)[\"']", Pattern.CASE_INSENSITIVE);
+        private static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("b\\s*=\\s*[\"'](\\d+)[\"']");
+
+        public static void initialise() {
+            new Thread(() -> {
+                try {
+                    Http.Request req = new Http.Request(
+                            "https://product-details.mozilla.org/1.0/firefox_versions.json", "GET");
+                    Http.Response res = req.execute();
+                    String json = res.text();
+                    JSONObject obj = new JSONObject(json);
+                    String nightly = obj.optString("FIREFOX_NIGHTLY", null);
+                    if (nightly != null && !nightly.isEmpty()) {
+                        nightly = nightly.replaceAll("^([0-9.]+).*", "$1");
+                        FIREFOX_NIGHTLY_VERSION = nightly;
+                    }
+                } catch (Exception ignored) {
+                }
+
+                try {
+                    Http.Request req = new Http.Request("https://discord.com/login", "GET");
+                    req.setHeader("User-Agent", getMobileUA());
+                    Http.Response resp = req.execute();
+                    String html = resp.text();
+
+                    ArrayList<String> assetUrls = new ArrayList<>();
+                    Matcher scriptMatcher = SCRIPT_SRC_PATTERN.matcher(html);
+                    while (scriptMatcher.find()) {
+                        String jsPath = scriptMatcher.group(1);
+                        if (!jsPath.startsWith("http"))
+                            jsPath = "https://discord.com" + jsPath;
+                        assetUrls.add(jsPath);
+                    }
+
+                    for (String jsUrl : assetUrls) {
+                        try {
+                            Http.Response jsResp = new Http.Request(jsUrl, "GET").execute();
+                            String jsContent = jsResp.text();
+                            Matcher buildMatcher = BUILD_NUMBER_PATTERN.matcher(jsContent);
+                            if (buildMatcher.find()) {
+                                CLIENT_BUILD_NUMBER = Integer.parseInt(buildMatcher.group(1));
+                                break;
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }).start();
+        }
     }
 }
