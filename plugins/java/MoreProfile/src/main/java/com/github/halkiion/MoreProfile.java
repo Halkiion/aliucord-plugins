@@ -2,6 +2,7 @@ package com.github.halkiion.plugins;
 
 import android.content.Context;
 
+import com.aliucord.api.rn.user.RNUserProfile;
 import com.aliucord.annotations.AliucordPlugin;
 import com.aliucord.entities.Plugin;
 import com.aliucord.patcher.Hook;
@@ -36,14 +37,6 @@ public class MoreProfile extends Plugin {
                     }
                 });
 
-        patcher.patch(StoreUserProfile.class,
-                "handleUserProfile",
-                new Class[] { UserProfile.class },
-                new Hook(callFrame -> {
-                    UserValues.RNUserObj = callFrame.args[0];
-                    PronounsSetting.setPronounsPreviewText(UserValues.getPronouns());
-                }));
-
         patcher.patch(
                 WidgetSettingsAccountUsernameEdit.class,
                 "configureUI",
@@ -63,6 +56,16 @@ public class MoreProfile extends Plugin {
                     @Override
                     protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
                         PronounsSetting.onProfileConfigureUI(param, context);
+                    }
+                });
+
+        patcher.patch(StoreUserProfile.class,
+                "handleUserProfile",
+                new Class[] { UserProfile.class },
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
+                        PronounsSetting.setPronounsPreviewText(param);
                     }
                 });
 

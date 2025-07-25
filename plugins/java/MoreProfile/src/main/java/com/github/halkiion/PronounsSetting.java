@@ -41,15 +41,21 @@ public class PronounsSetting {
     private static volatile boolean discordShowSaveFab = false;
     private static final AtomicBoolean discardConfirmed = new AtomicBoolean(false);
 
-    public static boolean isPronounsMode = false;
     public static String lastPronouns = null;
     private static String currentPronounsEditValue = null;
     private static boolean isProgrammaticEdit = false;
 
-    public static void setPronounsPreviewText(String text) {
-        if (pronounsPreviewTextFinal != null) {
-            pronounsPreviewTextFinal.setText(text);
-        }
+    private static boolean storedPronouns = false;
+
+    public static void setPronounsPreviewText(XC_MethodHook.MethodHookParam param) {
+        if (storedPronouns && !pronounsPreviewTextFinal.isAttachedToWindow())
+            return;
+
+        storedPronouns = true;
+        Object RNUserObj = param.args[0];
+        String pronouns = UserValues.getPronouns(RNUserObj);
+        if (pronounsPreviewTextFinal != null)
+            pronounsPreviewTextFinal.setText(pronouns);
     }
 
     public static String getPronounsPreviewText() {
@@ -57,8 +63,6 @@ public class PronounsSetting {
     }
 
     public static void onProfileConfigureUI(XC_MethodHook.MethodHookParam param, Context context) {
-        isPronounsMode = false;
-
         WidgetEditUserOrGuildMemberProfile instance = (WidgetEditUserOrGuildMemberProfile) param.thisObject;
 
         WidgetSettingsUserProfileBinding binding = null;

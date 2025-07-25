@@ -1,9 +1,12 @@
-version = "1.0.3"
+version = "1.0.4"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {
 
     changelog.set("""
+        1.0.4
+        - Fixed deranged bug where the 'User Profile' screen would show and set another user's pronouns
+
         1.0.3
         - More improvements to API request headers and super properties handling
 
