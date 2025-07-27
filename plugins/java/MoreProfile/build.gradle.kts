@@ -1,9 +1,13 @@
-version = "1.0.5"
+version = "1.0.6"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {
 
     changelog.set("""
+        1.0.6
+        - Fixed bug where cursor would reset to the start of the pronouns edit field when focusing
+        - Fixed bug where pronouns would be underlined on preview when unfocusing from the edit field
+
         1.0.5
         - More closely mimics Discord's stock save button behaviour on User Profile screen for pronouns field
         - Remove shadow from pronouns edit field

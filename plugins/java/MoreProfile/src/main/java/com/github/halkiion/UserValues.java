@@ -27,7 +27,8 @@ public class UserValues {
             Object val = f.get(userObj);
             if (val != null && !val.toString().isEmpty())
                 return val.toString();
-        } catch (NoSuchFieldException | IllegalAccessException ignored) {}
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        }
         return null;
     }
 

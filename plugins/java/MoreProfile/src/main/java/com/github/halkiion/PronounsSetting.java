@@ -1,9 +1,7 @@
 package com.github.halkiion.plugins;
 
 import android.content.Context;
-import android.text.Editable;
 import android.text.InputFilter;
-import android.text.TextWatcher;
 import android.view.inputmethod.InputMethodManager;
 import android.view.MotionEvent;
 import android.view.View;
@@ -168,9 +166,11 @@ public class PronounsSetting {
 
             final TextInputLayout pronounsEditorWrapFinal = new TextInputLayout(ll.getContext(), null,
                     R.i.UiKit_TextInputLayout);
+
             pronounsEditorWrapFinal.setLayoutParams(new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT));
+
             copyTextInputLayoutStyle.accept(pronounsEditorWrapFinal, bioEditorWrap);
             pronounsEditorWrapFinal.setHint(Strings.getString("pronouns_hint"));
             pronounsEditorWrapFinal.setVisibility(View.VISIBLE);
@@ -209,6 +209,7 @@ public class PronounsSetting {
                 pronounsPreviewCardFinal.setVisibility(View.GONE);
                 pronounsEditCard.setVisibility(View.VISIBLE);
                 pronounsEditTextFinal.setText(pronounsPreviewTextFinal.getText());
+                pronounsEditTextFinal.setSelection(pronounsEditTextFinal.getText().length());
                 pronounsEditTextFinal.requestFocus();
                 InputMethodManager imm = (InputMethodManager) llFinal.getContext()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -223,9 +224,7 @@ public class PronounsSetting {
                 if (!hasFocus) {
                     pronounsEditCard.setVisibility(View.GONE);
                     pronounsPreviewCardFinal.setVisibility(View.VISIBLE);
-                    pronounsPreviewTextFinal.setText(
-                            pronounsEditTextFinal.getText().length() > 0 ? pronounsEditTextFinal.getText()
-                                    : UserValues.getPronouns());
+                    pronounsPreviewTextFinal.setText(pronounsEditTextFinal.getText().toString());
                 }
             });
 
