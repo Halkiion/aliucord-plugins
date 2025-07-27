@@ -1,9 +1,12 @@
-version = "1.0.6"
+version = "1.0.7"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {
 
     changelog.set("""
+        1.0.7
+        - Only sends API request to update when necessary
+
         1.0.6
         - Fixed bug where cursor would reset to the start of the pronouns edit field when focusing
         - Fixed bug where pronouns would be underlined on preview when unfocusing from the edit field

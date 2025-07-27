@@ -36,6 +36,7 @@ public class PronounsSetting {
     private static String originalPronouns = null;
     private static TextInputEditText pronounsEditTextFinal = null;
     private static TextView pronounsPreviewTextFinal = null;
+    private static boolean pronounsDirty = false;
     private static volatile boolean discordShowSaveFab = false;
     private static final AtomicBoolean discardConfirmed = new AtomicBoolean(false);
 
@@ -262,7 +263,7 @@ public class PronounsSetting {
                         return;
                     }
 
-                    boolean pronounsDirty = !pronounsEditTextFinal.getText().toString()
+                    pronounsDirty = !pronounsEditTextFinal.getText().toString()
                             .equals(originalPronouns);
 
                     if (pronounsDirty || discordShowSaveFab) {
@@ -282,13 +283,14 @@ public class PronounsSetting {
                     } catch (Exception ignored) {
                     }
 
-                    if (viewModel != null) {
+                    if (viewModel != null)
                         viewModel.saveChanges(context);
-                    }
-
-                    APIRequest.setPronouns(pronounsEditTextFinal.getText().toString(), context);
 
                     originalPronouns = pronounsEditTextFinal.getText().toString();
+
+                    if (pronounsDirty)
+                        APIRequest.setPronouns(originalPronouns, context);
+
                     updateSaveFab.run();
                 });
             }
