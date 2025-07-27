@@ -1,9 +1,13 @@
-version = "1.0.4"
+version = "1.0.5"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {
 
     changelog.set("""
+        1.0.5
+        - More closely mimics Discord's stock save button behaviour on User Profile screen for pronouns field
+        - Remove shadow from pronouns edit field
+
         1.0.4
         - Fixed deranged bug where the 'User Profile' screen would show and set another user's pronouns
 

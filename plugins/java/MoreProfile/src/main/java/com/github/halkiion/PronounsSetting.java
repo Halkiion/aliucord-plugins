@@ -41,6 +41,7 @@ public class PronounsSetting {
     private static volatile boolean discordShowSaveFab = false;
     private static final AtomicBoolean discardConfirmed = new AtomicBoolean(false);
 
+    private static Runnable updateSaveFab = null;
     public static String lastPronouns = null;
     private static String currentPronounsEditValue = null;
     private static boolean isProgrammaticEdit = false;
@@ -160,6 +161,7 @@ public class PronounsSetting {
 
             final CardView pronounsEditCard = new CardView(ll.getContext());
             pronounsEditCard.setLayoutParams(pronounsLayoutParams);
+            pronounsEditCard.setCardElevation(0f);
             pronounsEditCard.setRadius(origCard.getRadius());
             pronounsEditCard.setCardBackgroundColor(null);
             pronounsEditCard.setVisibility(View.GONE);
@@ -216,6 +218,8 @@ public class PronounsSetting {
             });
 
             pronounsEditTextFinal.setOnFocusChangeListener((v, hasFocus) -> {
+                updateSaveFab.run();
+
                 if (!hasFocus) {
                     pronounsEditCard.setVisibility(View.GONE);
                     pronounsPreviewCardFinal.setVisibility(View.VISIBLE);
@@ -253,33 +257,21 @@ public class PronounsSetting {
                 }
                 pronounsEditTextFinal.setText(originalPronouns);
 
-                Runnable updateSaveFab = () -> {
+                updateSaveFab = () -> {
+                    if ((pronounsEditTextFinal.isFocused())) {
+                        saveFab.setVisibility(View.GONE);
+                        return;
+                    }
+
                     boolean pronounsDirty = !pronounsEditTextFinal.getText().toString()
                             .equals(originalPronouns);
 
                     if (pronounsDirty || discordShowSaveFab) {
-                        saveFab.show();
+                        saveFab.setVisibility(View.VISIBLE);
                     } else {
-                        saveFab.hide();
+                        saveFab.setVisibility(View.GONE);
                     }
                 };
-
-                pronounsEditTextFinal.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void afterTextChanged(Editable s) {
-                        updateSaveFab.run();
-                    }
-
-                    @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                    }
-
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    }
-                });
-
-                updateSaveFab.run();
 
                 saveFab.setOnClickListener(v -> {
                     SettingsUserProfileViewModel viewModel = null;
@@ -352,6 +344,9 @@ public class PronounsSetting {
         } catch (Exception e) {
         }
         discordShowSaveFab = showSaveFab;
+
+        if (updateSaveFab != null)
+            updateSaveFab.run();
     }
 
     public static void onHandleBackPressed(XC_MethodHook.MethodHookParam param, Context context) {
