@@ -1,42 +1,34 @@
 package com.github.halkiion.plugins;
 
 import com.aliucord.api.rn.user.RNUserProfile;
+import com.aliucord.wrappers.users.UserWrapperKt;
 
-import java.lang.reflect.Field;
+import com.discord.models.user.MeUser;
 
 
 public class UserValues {
-    private static Object lastRNUserObj = null;
-    private static Object lastMeUserObj = null;
+    private static Object RNUserObj = null;
+    private static Object MeUserObj = null;
 
     public static String getPronouns(Object userProfileObj) {
-        lastRNUserObj = userProfileObj;
-        if (userProfileObj instanceof RNUserProfile) {
-            RNUserProfile rn = (RNUserProfile) userProfileObj;
-            if (rn.getUserProfile() != null && rn.getUserProfile().getPronouns() != null)
-                return rn.getUserProfile().getPronouns();
-        }
-        return null;
+        RNUserObj = userProfileObj;
+        if (!(userProfileObj instanceof RNUserProfile)) return null;
+        var userProfile = ((RNUserProfile) userProfileObj).getUserProfile();
+        return userProfile != null && userProfile.getPronouns() != null ? userProfile.getPronouns() : null;
     }
 
     public static String getDisplayName(Object userObj) {
-        lastMeUserObj = userObj;
-        try {
-            Field f = userObj.getClass().getDeclaredField("globalName");
-            f.setAccessible(true);
-            Object val = f.get(userObj);
-            if (val != null && !val.toString().isEmpty())
-                return val.toString();
-        } catch (NoSuchFieldException | IllegalAccessException ignored) {
-        }
-        return null;
+        MeUserObj = userObj;
+        if (!(userObj instanceof MeUser)) return null;
+        String displayName = UserWrapperKt.getGlobalName((MeUser) userObj);
+        return displayName != null && !displayName.isEmpty() ? displayName : null;
     }
 
     public static String getPronouns() {
-        return lastRNUserObj != null ? getPronouns(lastRNUserObj) : null;
+        return RNUserObj != null ? getPronouns(RNUserObj) : null;
     }
 
     public static String getDisplayName() {
-        return lastMeUserObj != null ? getDisplayName(lastMeUserObj) : null;
+        return MeUserObj != null ? getDisplayName(MeUserObj) : null;
     }
 }

@@ -3,22 +3,19 @@ package com.github.halkiion.plugins;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.inputmethod.InputMethodManager;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 import com.aliucord.Utils;
-
+import com.aliucord.utils.ReflectUtils;
 import com.discord.databinding.ViewDialogConfirmationBinding;
 
 import de.robv.android.xposed.XC_MethodHook;
 
-
 public class Utility {
     public static void showToast(String message, int duration) {
-        new Handler(Looper.getMainLooper()).post(() -> {
+        Utils.mainThread.post(() -> {
             b.a.d.m.e(Utils.getAppContext(), message, duration, null);
         });
     }
@@ -51,5 +48,32 @@ public class Utility {
         });
 
         dialog.show();
+    }
+
+    public static class Reflect {
+        public static Object getField(Object obj, String fieldName) {
+            try {
+                return ReflectUtils.getField(obj, fieldName);
+            } catch (Throwable ignored) {
+                return null;
+            }
+        }
+
+        public static boolean setField(Object obj, String fieldName, Object value) {
+            try {
+                ReflectUtils.setField(obj, fieldName, value);
+                return true;
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+
+        public static Object invokeMethod(Object obj, String methodName, Object... args) {
+            try {
+                return ReflectUtils.invokeMethod(obj, methodName, args);
+            } catch (Throwable ignored) {
+                return null;
+            }
+        }
     }
 }

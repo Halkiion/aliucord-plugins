@@ -26,7 +26,6 @@ import java.util.ArrayList;
 
 import de.robv.android.xposed.XC_MethodHook;
 
-
 public class DisplayNameSetting {
     public static boolean isDisplayNameMode = false;
     public static String lastDisplayName = null;
@@ -54,15 +53,10 @@ public class DisplayNameSetting {
 
         String displayName = lastDisplayName;
         if (displayName == null) {
-            try {
-                Object model = param.args[0];
-                Field userField = model.getClass().getDeclaredField("meUser");
-                userField.setAccessible(true);
-                Object user = userField.get(model);
-                if (user != null)
-                    displayName = UserValues.getDisplayName(user);
-            } catch (Throwable ignored) {
-            }
+            Object model = param.args[0];
+            MeUser user = ((WidgetSettingsAccount.Model) model).getMeUser();
+            if (user != null)
+                displayName = UserValues.getDisplayName(user);
         }
         if (displayName == null)
             displayName = "";
@@ -137,14 +131,9 @@ public class DisplayNameSetting {
     }
 
     private static void clearTextWatchers(EditText editText) {
-        try {
-            Field f = TextView.class.getDeclaredField("mListeners");
-            f.setAccessible(true);
-            ArrayList<?> listeners = (ArrayList<?>) f.get(editText);
-            if (listeners != null)
-                listeners.clear();
-        } catch (Throwable e) {
-        }
+        ArrayList<?> listeners = (ArrayList<?>) Utility.Reflect.getField(editText, "mListeners");
+        if (listeners != null)
+            listeners.clear();
     }
 
     private static void setupDisplayNameEditScreen(WidgetSettingsAccountUsernameEdit frag, View view) {

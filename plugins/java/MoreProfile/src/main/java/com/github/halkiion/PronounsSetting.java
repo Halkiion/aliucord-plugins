@@ -31,7 +31,6 @@ import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
 import kotlin.jvm.functions.Function1;
 
-
 public class PronounsSetting {
     private static String originalPronouns = null;
     private static TextInputEditText pronounsEditTextFinal = null;
@@ -65,13 +64,9 @@ public class PronounsSetting {
     public static void onProfileConfigureUI(XC_MethodHook.MethodHookParam param, Context context) {
         WidgetEditUserOrGuildMemberProfile instance = (WidgetEditUserOrGuildMemberProfile) param.thisObject;
 
-        WidgetSettingsUserProfileBinding binding = null;
-        try {
-            Method getBinding = WidgetEditUserOrGuildMemberProfile.class.getDeclaredMethod("getBinding");
-            getBinding.setAccessible(true);
-            binding = (WidgetSettingsUserProfileBinding) getBinding.invoke(instance);
-        } catch (Exception ignored) {
-        }
+        WidgetSettingsUserProfileBinding binding = (WidgetSettingsUserProfileBinding) Utility.Reflect
+                .invokeMethod(instance, "getBinding");
+
         if (binding == null)
             return;
 
@@ -176,14 +171,9 @@ public class PronounsSetting {
             pronounsEditorWrapFinal.setHint(Strings.getString("pronouns_hint"));
             pronounsEditorWrapFinal.setVisibility(View.VISIBLE);
 
-            try {
-                Field boxCollapsedPaddingTopPxField = TextInputLayout.class
-                        .getDeclaredField("boxCollapsedPaddingTopPx");
-                boxCollapsedPaddingTopPxField.setAccessible(true);
-                int bioPaddingTopPx = boxCollapsedPaddingTopPxField.getInt(bioEditorWrap);
-                boxCollapsedPaddingTopPxField.setInt(pronounsEditorWrapFinal, bioPaddingTopPx);
-            } catch (Throwable ignored) {
-            }
+            Integer bioPaddingTopPx = (Integer) Utility.Reflect.getField(bioEditorWrap, "boxCollapsedPaddingTopPx");
+            if (bioPaddingTopPx != null)
+                Utility.Reflect.setField(pronounsEditorWrapFinal, "boxCollapsedPaddingTopPx", bioPaddingTopPx);
 
             pronounsEditTextFinal = new TextInputEditText(ll.getContext());
             LinearLayout.LayoutParams pronounsEditParams = new LinearLayout.LayoutParams(
@@ -274,14 +264,8 @@ public class PronounsSetting {
                 };
 
                 saveFab.setOnClickListener(v -> {
-                    SettingsUserProfileViewModel viewModel = null;
-                    try {
-                        Method getViewModel = WidgetEditUserOrGuildMemberProfile.class
-                                .getDeclaredMethod("getViewModel");
-                        getViewModel.setAccessible(true);
-                        viewModel = (SettingsUserProfileViewModel) getViewModel.invoke(instance);
-                    } catch (Exception ignored) {
-                    }
+                    SettingsUserProfileViewModel viewModel = (SettingsUserProfileViewModel) Utility.Reflect
+                            .invokeMethod(instance, "getViewModel");
 
                     if (viewModel != null)
                         viewModel.saveChanges(context);
@@ -336,14 +320,10 @@ public class PronounsSetting {
     public static void onConfigureFab(XC_MethodHook.MethodHookParam param, Context context) {
         Object viewState = param.args[0];
         boolean showSaveFab = false;
-        try {
-            Method getShowSaveFab = viewState.getClass().getDeclaredMethod("getShowSaveFab");
-            getShowSaveFab.setAccessible(true);
-            Object result = getShowSaveFab.invoke(viewState);
-            if (result instanceof Boolean)
-                showSaveFab = (Boolean) result;
-        } catch (Exception e) {
-        }
+        Object result = Utility.Reflect.invokeMethod(viewState, "getShowSaveFab");
+        if (result instanceof Boolean)
+            showSaveFab = (Boolean) result;
+
         discordShowSaveFab = showSaveFab;
 
         if (updateSaveFab != null)
