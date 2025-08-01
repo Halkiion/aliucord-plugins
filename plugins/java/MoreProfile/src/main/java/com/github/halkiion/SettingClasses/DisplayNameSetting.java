@@ -1,17 +1,15 @@
-package com.github.halkiion.plugins;
+package com.github.halkiion.plugins.SettingClasses;
+
+import com.github.halkiion.plugins.*;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
-import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.core.content.ContextCompat;
 
 import com.aliucord.Utils;
 import com.discord.models.user.MeUser;
@@ -19,16 +17,14 @@ import com.discord.widgets.settings.account.WidgetSettingsAccount;
 import com.discord.widgets.settings.account.WidgetSettingsAccountUsernameEdit;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputLayout;
-import com.lytefast.flexinput.R;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import de.robv.android.xposed.XC_MethodHook;
 
 public class DisplayNameSetting {
     public static boolean isDisplayNameMode = false;
-    public static String lastDisplayName = null;
+    private static String lastDisplayName = null;
 
     private static final String SETTING_TAG = "display_name_setting";
     private static LinearLayout usernameRowRef = null;
@@ -36,6 +32,38 @@ public class DisplayNameSetting {
     private static String currentEditValue = null;
     private static boolean isProgrammaticEdit = false;
     private static String originalUsername = null;
+
+    private static String extractDisplayName(Object model) {
+        if (model instanceof WidgetSettingsAccount.Model) {
+            MeUser user = ((WidgetSettingsAccount.Model) model).getMeUser();
+            if (user != null) {
+                String name = UserValues.getDisplayName(user);
+                if (name != null)
+                    return name;
+            }
+        }
+        return "";
+    }
+
+    private static void clearTextWatchers(EditText editText) {
+        ArrayList<?> listeners = (ArrayList<?>) Utility.Reflect.getField(editText, "mListeners");
+        if (listeners != null)
+            listeners.clear();
+    }
+
+    private static void updateSaveFab(EditText editText, FloatingActionButton saveFab) {
+        if (editText.getText() != null && !editText.getText().toString().equals(lastDisplayName))
+            saveFab.show();
+        else
+            saveFab.hide();
+    }
+
+    private static void setEditText(EditText editText, String value) {
+        if (editText != null && value != null) {
+            editText.setText(value);
+            editText.setSelection(value.length());
+        }
+    }
 
     public static void onAccountConfigureUI(XC_MethodHook.MethodHookParam param, Context context) {
         isDisplayNameMode = false;
@@ -48,15 +76,12 @@ public class DisplayNameSetting {
             return;
 
         int insertIndex = 2;
-
         LinearLayout settingRow = (mainColumn != null) ? (LinearLayout) mainColumn.findViewWithTag(SETTING_TAG) : null;
 
         String displayName = lastDisplayName;
         if (displayName == null) {
             Object model = param.args[0];
-            MeUser user = ((WidgetSettingsAccount.Model) model).getMeUser();
-            if (user != null)
-                displayName = UserValues.getDisplayName(user);
+            displayName = extractDisplayName(model);
         }
         if (displayName == null)
             displayName = "";
@@ -64,8 +89,9 @@ public class DisplayNameSetting {
 
         if (settingRow == null) {
             mainColumn.setLayoutTransition(null);
-            settingRow = createSettingRow(mainColumn.getContext(), Strings.getString("display_name"), displayName,
-                    SETTING_TAG);
+            settingRow = ViewBuilders.DisplayName.createSettingRow(mainColumn.getContext(),
+                    Strings.getString("display_name"),
+                    displayName, SETTING_TAG, usernameRowRef);
             mainColumn.addView(settingRow, insertIndex);
             settingRow.setOnClickListener(v -> {
                 isDisplayNameMode = true;
@@ -90,52 +116,6 @@ public class DisplayNameSetting {
         setupDisplayNameEditScreen(frag, view);
     }
 
-    private static LinearLayout createSettingRow(Context context, String labelText, String valueText, String tag) {
-        if (usernameRowRef == null)
-            return null;
-        TextView usernameLabel = (TextView) usernameRowRef.getChildAt(0);
-        TextView usernameValue = (TextView) usernameRowRef.getChildAt(1);
-
-        LinearLayout rowClone = new LinearLayout(context);
-        rowClone.setOrientation(LinearLayout.HORIZONTAL);
-        rowClone.setTag(tag);
-        rowClone.setBackground(usernameRowRef.getBackground());
-        ViewGroup.LayoutParams origParams = usernameRowRef.getLayoutParams();
-        if (origParams != null)
-            rowClone.setLayoutParams(origParams);
-
-        TextView label = new TextView(context, null, 0, R.i.UiKit_Settings_Item_Icon);
-        label.setLayoutParams(usernameLabel.getLayoutParams());
-        label.setText(labelText);
-        copyTextViewStyle(label, usernameLabel);
-
-        TextView value = new TextView(context, null, 0, R.i.UiKit_Settings_Item_Icon);
-        value.setLayoutParams(usernameValue.getLayoutParams());
-        value.setText(valueText);
-        value.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_END);
-        copyTextViewStyle(value, usernameValue);
-
-        TypedValue typedValue = new TypedValue();
-        if (context.getTheme().resolveAttribute(Utils.getResId("ic_navigate_next", "attr"), typedValue, true)) {
-            Drawable chevron = ContextCompat.getDrawable(context, typedValue.resourceId);
-            if (chevron != null)
-                chevron.mutate();
-            value.setCompoundDrawablesWithIntrinsicBounds(null, null, chevron, null);
-            value.setCompoundDrawablePadding(usernameValue.getCompoundDrawablePadding());
-        }
-
-        rowClone.addView(label);
-        rowClone.addView(value);
-
-        return rowClone;
-    }
-
-    private static void clearTextWatchers(EditText editText) {
-        ArrayList<?> listeners = (ArrayList<?>) Utility.Reflect.getField(editText, "mListeners");
-        if (listeners != null)
-            listeners.clear();
-    }
-
     private static void setupDisplayNameEditScreen(WidgetSettingsAccountUsernameEdit frag, View view) {
         frag.setActionBarTitle(Strings.getString("edit_display_name"));
 
@@ -152,29 +132,23 @@ public class DisplayNameSetting {
 
         clearTextWatchers(usernameEdit);
 
-        if (originalUsername == null) {
+        if (originalUsername == null)
             originalUsername = usernameEdit.getText().toString();
-        }
 
         isProgrammaticEdit = true;
         if (currentEditValue != null) {
-            usernameEdit.setText(currentEditValue);
-            usernameEdit.setSelection(currentEditValue.length());
+            setEditText(usernameEdit, currentEditValue);
         } else {
-            usernameEdit.setText(lastDisplayName);
-            usernameEdit.setSelection(lastDisplayName.length());
+            setEditText(usernameEdit, lastDisplayName);
         }
         isProgrammaticEdit = false;
 
         View saveBtnView = view.findViewById(Utils.getResId("settings_account_save", "id"));
         if (!(saveBtnView instanceof FloatingActionButton))
             return;
-
         FloatingActionButton saveFab = (FloatingActionButton) saveBtnView;
-        if (usernameEdit.getText() != null && !usernameEdit.getText().toString().equals(lastDisplayName))
-            saveFab.show();
-        else
-            saveFab.hide();
+
+        updateSaveFab(usernameEdit, saveFab);
 
         usernameEdit.addTextChangedListener(new TextWatcher() {
             @Override
@@ -189,15 +163,10 @@ public class DisplayNameSetting {
             public void afterTextChanged(Editable s) {
                 if (isProgrammaticEdit)
                     return;
-
                 String newText = s.toString();
-                if (!newText.equals(originalUsername)) {
+                if (!newText.equals(originalUsername))
                     currentEditValue = newText;
-                }
-                if (!newText.equals(lastDisplayName))
-                    saveFab.show();
-                else
-                    saveFab.hide();
+                updateSaveFab(usernameEdit, saveFab);
             }
         });
 
@@ -222,19 +191,5 @@ public class DisplayNameSetting {
                 }
             });
         });
-    }
-
-    private static void copyTextViewStyle(TextView target, TextView source) {
-        target.setTextColor(source.getTextColors());
-        target.setTextSize(source.getTextSize()
-                / source.getContext().getResources().getDisplayMetrics().scaledDensity);
-        target.setTypeface(source.getTypeface());
-        target.setGravity(source.getGravity());
-        target.setPadding(
-                source.getPaddingLeft(),
-                source.getPaddingTop(),
-                source.getPaddingRight(),
-                source.getPaddingBottom());
-        target.setBackground(source.getBackground());
     }
 }

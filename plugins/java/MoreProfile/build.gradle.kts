@@ -1,9 +1,15 @@
-version = "1.0.7"
+version = "1.0.8"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {
 
     changelog.set("""
+        1.0.8
+        - Improved optimisation when fetching user values
+        - Fixed several bugs with save button showing at incorrect times on user profile screen
+        - Rotating device on user profile screen no longer resets recently typed pronouns
+        - Enter button now hides keyboard on pronouns field
+
         1.0.7
         - Only sends API request to update when necessary
 

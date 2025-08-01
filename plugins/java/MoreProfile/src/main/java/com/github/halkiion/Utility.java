@@ -6,10 +6,13 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import androidx.annotation.Nullable;
 
 import com.aliucord.Utils;
 import com.aliucord.utils.ReflectUtils;
 import com.discord.databinding.ViewDialogConfirmationBinding;
+
+import com.lytefast.flexinput.R;
 
 import de.robv.android.xposed.XC_MethodHook;
 
@@ -28,19 +31,22 @@ public class Utility {
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-    public static void showDiscardChangesDialog(Context context, XC_MethodHook.MethodHookParam param) {
+    public static void showDiscardChangesDialog(Context context, XC_MethodHook.MethodHookParam param,
+            @Nullable Runnable onDiscardConfirmed) {
         ViewDialogConfirmationBinding binding = ViewDialogConfirmationBinding.b(LayoutInflater.from(context));
         final AlertDialog dialog = new AlertDialog.Builder(context)
                 .setView(binding.a)
                 .create();
 
-        binding.d.setText(com.lytefast.flexinput.R.h.discard_changes);
-        binding.e.setText(com.lytefast.flexinput.R.h.discard_changes_description);
+        binding.d.setText(R.h.discard_changes);
+        binding.e.setText(R.h.discard_changes_description);
 
         binding.b.setOnClickListener(view -> dialog.dismiss());
-        binding.c.setText(com.lytefast.flexinput.R.h.okay);
+        binding.c.setText(R.h.okay);
         binding.c.setOnClickListener(view -> {
             dialog.dismiss();
+            if (onDiscardConfirmed != null)
+                onDiscardConfirmed.run();
             if (context instanceof Activity) {
                 ((Activity) context).finish();
             }
@@ -48,6 +54,10 @@ public class Utility {
         });
 
         dialog.show();
+    }
+
+    public static void showDiscardChangesDialog(Context context, XC_MethodHook.MethodHookParam param) {
+        showDiscardChangesDialog(context, param, null);
     }
 
     public static class Reflect {

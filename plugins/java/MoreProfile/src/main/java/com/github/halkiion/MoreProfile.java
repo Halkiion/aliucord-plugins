@@ -1,6 +1,7 @@
 package com.github.halkiion.plugins;
 
 import android.content.Context;
+import android.view.View;
 
 import com.aliucord.api.rn.user.RNUserProfile;
 import com.aliucord.annotations.AliucordPlugin;
@@ -19,7 +20,6 @@ import de.robv.android.xposed.XC_MethodHook;
 
 import java.lang.reflect.Method;
 
-
 @AliucordPlugin
 public class MoreProfile extends Plugin {
     @Override
@@ -33,7 +33,7 @@ public class MoreProfile extends Plugin {
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
-                        DisplayNameSetting.onAccountConfigureUI(param, context);
+                        Setting.DisplayName.onAccountConfigureUI(param, context);
                     }
                 });
 
@@ -44,32 +44,23 @@ public class MoreProfile extends Plugin {
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
-                        DisplayNameSetting.onEditScreenConfigureUI(param);
-                    }
-                });
-
-        patcher.patch(
-                WidgetEditUserOrGuildMemberProfile.class,
-                "onViewBound",
-                new Class[] { android.view.View.class },
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
-                        PronounsSetting.onProfileConfigureUI(param, context);
-                    }
-                });
-
-        patcher.patch(StoreUserProfile.class,
-                "handleUserProfile",
-                new Class[] { UserProfile.class },
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
-                        PronounsSetting.setPronounsPreviewText(param);
+                        Setting.DisplayName.onEditScreenConfigureUI(param);
                     }
                 });
 
         try {
+            patcher.patch(
+                    WidgetEditUserOrGuildMemberProfile.class,
+                    "configureUI",
+                    new Class[] { Class
+                            .forName("com.discord.widgets.settings.profile.SettingsUserProfileViewModel$ViewState") },
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
+                            Setting.Pronouns.onProfileConfigureUI(param, context);
+                        }
+                    });
+
             Class<?> loadedClass = Class
                     .forName("com.discord.widgets.settings.profile.SettingsUserProfileViewModel$ViewState$Loaded");
             patcher.patch(
@@ -79,9 +70,10 @@ public class MoreProfile extends Plugin {
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
-                            PronounsSetting.onConfigureFab(param, context);
+                            Setting.Pronouns.onConfigureFab(param, context);
                         }
                     });
+
             patcher.patch(
                     WidgetEditUserOrGuildMemberProfile.class,
                     "handleBackPressed",
@@ -89,7 +81,7 @@ public class MoreProfile extends Plugin {
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
-                            PronounsSetting.onHandleBackPressed(param, context);
+                            Setting.Pronouns.onHandleBackPressed(param, context);
                         }
                     });
         } catch (ClassNotFoundException e) {

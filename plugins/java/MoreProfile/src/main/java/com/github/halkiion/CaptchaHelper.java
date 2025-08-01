@@ -8,7 +8,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
-
 public class CaptchaHelper {
 
     public static void showCaptchaDialog(

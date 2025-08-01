@@ -22,7 +22,6 @@ import java.util.ArrayList;
 
 import org.json.JSONObject;
 
-
 public class APIRequest {
     private static final String AUTH_TOKEN = RestAPI.AppHeadersProvider.INSTANCE.getAuthToken();
     private static final String OS_VERSION = Build.VERSION.RELEASE;
