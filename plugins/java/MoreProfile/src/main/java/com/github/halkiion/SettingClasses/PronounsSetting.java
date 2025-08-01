@@ -192,8 +192,10 @@ public class PronounsSetting {
             pronounsEditTextFinal.setOnEditorActionListener((v, actionId, event) -> {
                 if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
                         (event != null && event.getKeyCode() == android.view.KeyEvent.KEYCODE_ENTER)) {
-                    pronounsEditTextFinal.clearFocus();
-                    Utility.hideKeyboard(pronounsEditTextFinal);
+                    if (pronounsEditTextFinal != null) {
+                        pronounsEditTextFinal.clearFocus();
+                        Utility.hideKeyboard(pronounsEditTextFinal);
+                    }
                     return true;
                 }
                 return false;
@@ -283,7 +285,7 @@ public class PronounsSetting {
                         float y = event.getRawY();
                         boolean insidePronouns = isInsideView(pronounsEditTextFinal, x, y);
                         boolean insideBio = isInsideView(bioEditorInput, x, y);
-                        if (!insidePronouns && !insideBio) {
+                        if (!insidePronouns && !insideBio && pronounsEditTextFinal != null) {
                             Utility.hideKeyboard(pronounsEditTextFinal);
                             pronounsEditTextFinal.clearFocus();
                         }

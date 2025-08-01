@@ -1,9 +1,12 @@
-version = "1.0.8"
+version = "1.0.9"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {
 
     changelog.set("""
+        1.0.9
+        - Fixed crash on user profile screen
+
         1.0.8
         - Improved optimisation when fetching user values
         - Fixed several bugs with save button showing at incorrect times on user profile screen
