@@ -40,12 +40,14 @@ public class PronounsSetting {
 
     public static final int PRONOUNS_HEADER_ID = View.generateViewId();
     public static final int PRONOUNS_CARD_ID = View.generateViewId();
+    public static final int PRONOUNS_EDIT_CARD_ID = View.generateViewId();
 
     private static TextInputEditText pronounsEditTextFinal = null;
     private static TextView pronounsPreviewTextFinal = null;
 
     private static String originalPronouns = null;
     private static String currentPronounsEdit = null;
+    private static String cachedPronouns = null;
 
     private static volatile boolean discordShowSaveFab = false;
     private static boolean isProgrammaticPronounsEdit = false;
@@ -56,15 +58,14 @@ public class PronounsSetting {
         return pronounsPreviewTextFinal != null ? pronounsPreviewTextFinal.getText().toString() : "";
     }
 
-    private static void setPronounsPreviewText(Object userProfile) {
-        String pronouns = UserValues.getPronouns(userProfile);
+    private static void setPronounsPreviewText(String pronouns) {
         if (pronounsPreviewTextFinal != null)
-            pronounsPreviewTextFinal.setText(pronouns != null ? pronouns : "");
+            pronounsPreviewTextFinal.setText(pronouns);
     }
 
     private static void syncPreviewToEdit() {
         if (pronounsPreviewTextFinal != null && pronounsEditTextFinal != null)
-            pronounsPreviewTextFinal.setText(pronounsEditTextFinal.getText().toString());
+            setPronounsPreviewText(pronounsEditTextFinal.getText().toString());
     }
 
     private static boolean pronounsDirty() {
@@ -143,11 +144,25 @@ public class PronounsSetting {
             userProfile = Utility.Reflect.invokeMethod(viewStateObj, "getUserProfile");
         }
 
-        if (ll.findViewById(PRONOUNS_HEADER_ID) == null && origHeader != null) {
+        View pronounsHeader = ll.findViewById(PRONOUNS_HEADER_ID);
+        if (pronounsHeader != null) {
+            ll.removeView(pronounsHeader);
+        }
+        if (origHeader != null) {
             ViewBuilders.Pronouns.addPronounsHeader(ll, origHeader, copyTextViewStyle);
         }
 
-        if (ll.findViewById(PRONOUNS_CARD_ID) == null && bioPreviewCard instanceof CardView) {
+        View oldPreviewCard = ll.findViewById(PRONOUNS_CARD_ID);
+        if (oldPreviewCard != null) {
+            ll.removeView(oldPreviewCard);
+        }
+
+        View oldEditCard = ll.findViewById(PRONOUNS_EDIT_CARD_ID);
+        if (oldEditCard != null) {
+            ll.removeView(oldEditCard);
+        }
+
+        if (bioPreviewCard instanceof CardView) {
             CardView origCard = (CardView) bioPreviewCard;
 
             ViewBuilders.Pronouns.PreviewCardResult previewResult = ViewBuilders.Pronouns.addPronounsPreviewCard(ll,
@@ -158,6 +173,8 @@ public class PronounsSetting {
 
             final CardView pronounsEditCard = ViewBuilders.Pronouns.createPronounsEditCard(ll.getContext(),
                     pronounsLayoutParams, origCard.getRadius());
+            pronounsEditCard.setId(PRONOUNS_EDIT_CARD_ID);
+
             final TextInputLayout pronounsEditorWrapFinal = ViewBuilders.Pronouns
                     .createPronounsEditorWrap(ll.getContext(), bioEditorWrap);
             pronounsEditTextFinal = ViewBuilders.Pronouns.createPronounsEditText(ll.getContext(), bioEditorInput);
@@ -207,12 +224,9 @@ public class PronounsSetting {
                 FloatingActionButton saveFab = (FloatingActionButton) saveFabView;
 
                 if (originalPronouns == null) {
-                    String previewPronounsVal = UserValues.getPronouns(userProfile);
-                    if (pronounsPreviewCardFinal.getChildCount() > 0) {
-                        View pronounsTextView = pronounsPreviewCardFinal.getChildAt(0);
-                        if (pronounsTextView instanceof TextView)
-                            previewPronounsVal = ((TextView) pronounsTextView).getText().toString();
-                    }
+                    String pronounsFromUserProfile = UserValues.getPronouns(userProfile);
+                    String previewPronounsVal = pronounsFromUserProfile != null ? pronounsFromUserProfile
+                            : cachedPronouns;
                     originalPronouns = previewPronounsVal;
                 }
 
@@ -246,7 +260,7 @@ public class PronounsSetting {
                         } else {
                             currentPronounsEdit = null;
                         }
-                        pronounsPreviewTextFinal.setText(newText);
+                        setPronounsPreviewText(newText);
                     }
                 });
 
@@ -258,17 +272,22 @@ public class PronounsSetting {
                     saveFab.setVisibility((pronounsDirty() || discordShowSaveFab) ? View.VISIBLE : View.GONE);
                 };
 
+                saveFab.setOnClickListener(null);
                 saveFab.setOnClickListener(v -> {
                     SettingsUserProfileViewModel viewModel = (SettingsUserProfileViewModel) Utility.Reflect
                             .invokeMethod(instance, "getViewModel");
                     if (viewModel != null)
                         viewModel.saveChanges(context);
 
-                    originalPronouns = pronounsEditTextFinal.getText().toString();
-                    currentPronounsEdit = null;
-
-                    if (pronounsDirty())
-                        APIRequest.setPronouns(originalPronouns, context);
+                    if (pronounsDirty()) {
+                        String newPronouns = pronounsEditTextFinal.getText().toString();
+                        APIRequest.setPronouns(newPronouns, context, success -> {
+                            if (success)
+                                cachedPronouns = newPronouns;
+                        });
+                        originalPronouns = newPronouns;
+                        currentPronounsEdit = null;
+                    }
 
                     updateSaveFab.run();
                 });
@@ -286,8 +305,8 @@ public class PronounsSetting {
                         boolean insidePronouns = isInsideView(pronounsEditTextFinal, x, y);
                         boolean insideBio = isInsideView(bioEditorInput, x, y);
                         if (!insidePronouns && !insideBio && pronounsEditTextFinal != null) {
-                            Utility.hideKeyboard(pronounsEditTextFinal);
                             pronounsEditTextFinal.clearFocus();
+                            Utility.hideKeyboard(pronounsEditTextFinal);
                         }
                     }
                     return discordHandled;

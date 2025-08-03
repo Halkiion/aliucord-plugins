@@ -220,7 +220,7 @@ public class APIRequest {
                 null);
     }
 
-    public static void setPronouns(String pronouns, Context context) {
+    public static void setPronouns(String pronouns, Context context, Consumer<Boolean> callback) {
         String field = "pronouns";
         JSONObject payload = new JSONObject();
         try {
@@ -231,21 +231,24 @@ public class APIRequest {
                 payload,
                 context,
                 resp -> {
+                    if (callback != null)
+                        callback.accept(true);
                 },
-                e -> Utility.showToast(parseError(e, Strings.getString("pronouns_save_failed"), field),
-                        Toast.LENGTH_LONG),
+                e -> {
+                    Utility.showToast(parseError(e, Strings.getString("pronouns_save_failed"), field),
+                            Toast.LENGTH_LONG);
+                    if (callback != null)
+                        callback.accept(false);
+                },
                 null);
     }
 
     private static Activity getActivityFromContext(Context context) {
         if (context instanceof Activity)
             return (Activity) context;
-        try {
-            Context base = (Context) context.getClass().getMethod("getBaseContext").invoke(context);
-            if (base instanceof Activity)
-                return (Activity) base;
-        } catch (Exception ignored) {
-        }
+        Context base = (Context) Utility.Reflect.invokeMethod(context, "getBaseContext");
+        if (base instanceof Activity)
+            return (Activity) base;
         return null;
     }
 
