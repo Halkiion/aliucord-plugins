@@ -177,10 +177,10 @@ public class DisplayNameSetting {
             currentEditValue = null;
             originalUsername = null;
 
-            APIRequest.setDisplayName(newDisplayName, view.getContext(), success -> {
+            /*APIRequest.setDisplayName(newDisplayName, view.getContext(), success -> {
                 if (!success)
                     lastDisplayName = oldDisplayName;
-            });
+            });*/
 
             saveFab.hide(new FloatingActionButton.OnVisibilityChangedListener() {
                 @Override
