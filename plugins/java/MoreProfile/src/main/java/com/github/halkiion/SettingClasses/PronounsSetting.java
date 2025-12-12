@@ -281,10 +281,10 @@ public class PronounsSetting {
 
                     if (pronounsDirty()) {
                         String newPronouns = pronounsEditTextFinal.getText().toString();
-                        APIRequest.setPronouns(newPronouns, context, success -> {
+                        /*APIRequest.setPronouns(newPronouns, context, success -> {
                             if (success)
                                 cachedPronouns = newPronouns;
-                        });
+                        });*/
                         originalPronouns = newPronouns;
                         currentPronounsEdit = null;
                     }
