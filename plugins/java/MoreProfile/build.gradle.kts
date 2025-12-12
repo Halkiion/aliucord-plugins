@@ -1,9 +1,12 @@
-version = "1.0.10"
+version = "1.0.11"
 description = "Adds more account/profile options in the settings menu, such as for changing display name and pronouns"
 
 aliucord {
 
     changelog.set("""
+        # NOTICE: This plugin is in maintenance and will therefore not be usable until further notice.
+
+        
         # 1.0.10
         * Fixed issue where pronouns were not being set (oops!)
         * UI bug fixes
